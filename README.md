@@ -63,4 +63,6 @@ Each sensor watches, reports, and reacts — combining their input into a single
 Contact: YellowUmbrellaGroup#8576
 ---
 
+<img width="420" height="640" alt="HYDRA" src="https://github.com/user-attachments/assets/370a63bc-adad-4d03-86df-d5cf9f6adcb5" />
+
 
