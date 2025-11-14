@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Project Oracle · Sonar Aggregator</title>
+<title>Hydra · The Multi-Headed Observer</title>
 <style>
 :root{
   --bg-main:#14181d; --bg-panel:#1f2329; --bg-input:#101216;
@@ -11,7 +11,7 @@
   --accent-primary:#00aaff; --accent-secondary:#2a4c9b;
   --color-ok:#00c853; --color-err:#d50000; --color-warn:#ffab00; --color-info:#2aa7ff; --color-parse:#ff4081;
   --chat-team:#69f0ae; --chat-tell:#ff4081; --chat-system:#ffab00;
-  --statusbar-h:126px; /* taller to include tools row */ --panel-h:360px;
+  --statusbar-h:70px; --panel-h:400px;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -19,13 +19,23 @@ body{
   background:var(--bg-main); color:var(--text-primary);
   font:14px/1.5 "Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,"Helvetica Neue",sans-serif;
   margin:0; padding:16px;
-}
+} 
 .mono,pre{font-family:"Cascadia Code","Consolas","Courier New",monospace}
 
+/* Global Filters Bar */
+.global-filters-bar{background:var(--bg-panel);border:1px solid var(--border-color);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.filters-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;cursor:pointer;user-select:none;background:#1a1f26;transition:.2s;font-size:13px;}
+.filters-header:hover{background:#232931;}
+.filters-content{max-height:200px;overflow-y:auto;padding:8px 12px;transition:max-height .3s ease;}
+.filters-content.collapsed{max-height:0;padding:0;overflow:hidden;}
+.toggle-icon{font-size:10px;transition:transform .3s;}
+.filters-header.collapsed .toggle-icon{transform:rotate(-90deg);}
+#globalFilterContainer{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;}
+
 /* Layout */
-.container-grid{display:grid;grid-template-columns:380px 1fr;gap:16px;height:calc(100vh - 32px - var(--statusbar-h))}
-aside{display:flex;flex-direction:column;gap:16px;overflow:hidden}
-main{overflow:hidden;display:flex;flex-direction:column}
+.container-grid{display:grid;grid-template-columns:380px 1fr;gap:16px;height:calc(100vh - 32px - var(--statusbar-h));margin-bottom:var(--statusbar-h)}
+aside{display:flex;flex-direction:column;gap:16px;overflow:hidden;max-height:calc(100vh - 32px - var(--statusbar-h));padding-bottom:calc(var(--statusbar-h) + 16px)}
+main{overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 32px - var(--statusbar-h));padding-bottom:calc(var(--statusbar-h) + 16px)}
 
 /* Cards */
 .card{background:var(--bg-panel);border:1px solid var(--border-color);border-radius:8px;padding:12px}
@@ -36,18 +46,15 @@ main{overflow:hidden;display:flex;flex-direction:column}
 .btn.alt{background:var(--accent-secondary);border-color:transparent}
 .input{background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);padding:6px 8px;border-radius:6px;width:100%}
 .checkbox-row{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-#sourcesList{flex-grow:1;overflow-y:auto;padding:2px}
-.source-tile{background:var(--bg-input);padding:12px;border-radius:8px;margin-bottom:12px;border-left:4px solid var(--text-muted);transition:.3s;box-shadow:0 2px 4px rgba(0,0,0,.3)}
+#sourcesList{flex-grow:1;overflow-y:auto;padding:8px;padding-bottom:12px;}
+.source-tile{background:var(--bg-input);padding:8px;border-radius:6px;margin-bottom:8px;border-left:3px solid var(--text-muted);transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .source-tile.waiting{border-left-color:var(--color-warn)}
 .source-tile.active{border-left-color:var(--color-ok)}
-.source-tile .dropzone{height:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,.3);border:2px dashed var(--border-color);border-radius:6px;padding:8px;transition:.2s;cursor:pointer;margin-top:8px;font-size:13px;color:var(--text-secondary)}
-.source-tile .dropzone.linked{display:none}
-.source-tile .dropzone.dragover,.source-tile .dropzone:hover{border-color:var(--accent-primary);background:#2c2c36}
-.source-file-info{display:none}
-.source-file-info.linked{display:block;background:rgba(0,0,0,.3);border:1px solid var(--border-color);border-radius:6px;padding:6px 8px;margin-top:8px}
-.source-file-name{font-weight:500;font-size:12px;color:var(--text-secondary);word-break:break-all}
-.source-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-top:8px}
-.source-footer{font-size:11px;color:var(--text-muted);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.dropzone-compact{padding:4px 8px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:4px;font-size:11px;cursor:pointer;transition:.2s;color:var(--text-secondary)}
+.dropzone-compact:hover{border-color:var(--accent-primary);background:#2c2c36;color:var(--accent-primary)}
+.dropzone-compact.linked{display:none}
+.btn-icon{background:transparent;border:1px solid var(--border-color);padding:3px 6px;border-radius:4px;font-size:12px;cursor:pointer;transition:.2s;color:var(--text-secondary)}
+.btn-icon:hover{background:var(--bg-main);border-color:var(--accent-primary);color:var(--text-primary)}
 
 /* Small tile actions */
 .tile-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
@@ -84,13 +91,13 @@ main{overflow:hidden;display:flex;flex-direction:column}
 .channel-TellMessages .chat-content{color:var(--chat-tell)}
 mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 
-/* Footer (status + tools row + ticker) */
-.statusbar{position:fixed;bottom:0;left:0;right:0;background:#101216;border-top:1px solid var(--border-color);font-size:12px;color:var(--text-secondary)}
-.statusbar-top{display:flex;justify-content:space-between;align-items:center;padding:6px 16px}
-.statusbar-tools{display:flex;justify-content:flex-end;gap:8px;padding:6px 16px;border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);background:#0e141b}
-.statusbar-ticker{background:rgba(0,170,255,.1);padding:6px 16px;overflow:hidden;white-space:nowrap;font-family:"Cascadia Code","Consolas","monospace";color:var(--accent-primary);position:relative}
-.ticker-content{display:inline-block;min-width:300%;will-change:transform;animation:ticker 30s linear infinite}
-@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-33.333%)}}
+/* Footer (status + ticker) */
+.statusbar{position:fixed;bottom:0;left:0;right:0;background:#101216;border-top:1px solid var(--border-color);font-size:11px;color:var(--text-secondary);z-index:1000}
+.statusbar-top{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;border-bottom:1px solid var(--border-color);background:#0e141b}
+.statusbar-ticker{background:rgba(0,170,255,.1);padding:5px 14px;overflow:hidden;white-space:nowrap;font-family:"Cascadia Code","Consolas","monospace";color:var(--accent-primary);position:relative;min-height:28px;display:flex;align-items:center;font-size:11px;}
+.ticker-content{display:inline-flex;will-change:transform;padding-right:50px;}
+.ticker-content.scrolling{animation:ticker-scroll 50s linear infinite}
+@keyframes ticker-scroll{from{transform:translateX(0%)}to{transform:translateX(-50%)}}
 .pill{display:inline-block;padding:2px 8px;border-radius:12px;font-weight:600;font-size:11px;transition:.2s}
 .pill.idle{background:#333842;color:#a0aab6}
 .pill.active{background:var(--color-ok);color:#fff}
@@ -110,35 +117,50 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 .toast .t-close:hover{opacity:1}
 
 /* Tools row buttons */
-.tool-btn{display:flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid var(--border-color);background:#2a2f38;color:#ddd;cursor:pointer;font-size:12px}
-.tool-btn:hover{filter:brightness(1.1)}
+.tool-btn{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--border-color);background:#2a2f38;color:#ddd;cursor:pointer;font-size:11px;font-weight:500}
+.tool-btn:hover{filter:brightness(1.1);border-color:var(--accent-primary)}
+.tool-btn.compact{height:24px;padding:0 8px;font-size:11px;opacity:.85}
+.tool-btn.compact:hover{opacity:1}
 #btnDismissAllToolbar{display:none}
 
 /* Panel */
 .bottom-panel{
   position:fixed; left:0; right:0; bottom:var(--statusbar-h);
-  height:var(--panel-h); background:var(--bg-panel); border-top:1px solid var(--border-color);
-  transform:translateY(101%); transition:transform .28s ease, visibility 0s .28s;
-  z-index:10002; display:flex; flex-direction:column; visibility:hidden; pointer-events:none;
+  height:var(--panel-h); max-height:calc(100vh - var(--statusbar-h) - 32px);
+  background:var(--bg-panel); border-top:2px solid var(--accent-primary);
+  transform:translateY(100%); transition:transform .3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index:999; display:flex; flex-direction:column;
+  box-shadow:0 -4px 20px rgba(0,0,0,.5);
+  overflow:hidden;
 }
-.bottom-panel.open{transform:translateY(0); visibility:visible; transition:transform .28s ease; pointer-events:auto}
-.bottom-panel-header{padding:10px 12px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between}
-.bottom-panel-header h4{margin:0;font-size:14px;letter-spacing:.5px;text-transform:uppercase}
-.bottom-panel-body{display:flex;flex-direction:column;gap:10px;padding:10px;height:100%}
+.bottom-panel.open{transform:translateY(0)}
+.bottom-panel-header{padding:12px 16px;border-bottom:1px solid var(--border-color);display:flex;align-items:center;justify-content:space-between;background:rgba(0,170,255,.05);flex-shrink:0}
+.bottom-panel-header h4{margin:0;font-size:14px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent-primary)}
+.bottom-panel-body{display:flex;flex-direction:column;gap:12px;padding:14px;flex:1;min-height:0;overflow-y:auto}
 .controls-row{
   display:flex; align-items:center; gap:14px; flex-wrap:wrap;
   padding:8px 10px; border:1px solid var(--border-color); border-radius:8px; background:var(--bg-input);
+  flex-shrink:0;
 }
 .controls-row .spacer{flex:1 1 auto}
-.console-wrap{flex:1 1 auto; display:flex; min-height:0}
-.console-box{background:#0b0f14;border:1px solid var(--border-color);border-radius:8px;padding:8px;height:100%;width:100%;overflow:auto}
-.console-box pre{margin:0;color:var(--text-secondary)}
+.console-wrap{flex:1 1 auto; display:flex; min-height:120px;}
+.console-box{background:#0b0f14;border:1px solid var(--border-color);border-radius:8px;padding:10px;height:100%;width:100%;overflow:auto;font-size:11px;box-shadow:inset 0 2px 6px rgba(0,0,0,.3)}
+.console-box pre{margin:0;color:var(--text-secondary);line-height:1.5}
 
 /* Buddy list chips */
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{background:#2a2f38;border:1px solid var(--border-color);border-radius:16px;padding:2px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px}
 .chip button{background:transparent;border:none;color:#bbb;cursor:pointer}
 .chip button:hover{color:#fff}
+
+/* Collapsible section */
+.collapsible-section{border:1px solid var(--border-color);border-radius:8px;background:var(--bg-input);margin-bottom:8px}
+.collapsible-header{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;user-select:none;font-weight:600;font-size:13px;background:#1a1f26;border-radius:7px 7px 0 0;transition:.2s}
+.collapsible-header:hover{background:#232931}
+.collapsible-header::before{content:'▼';font-size:10px;transition:.2s}
+.collapsible-section.collapsed .collapsible-header::before{content:'►'}
+.collapsible-section.collapsed .collapsible-body{display:none}
+.collapsible-body{padding:12px}
 
 /* Tooltip bubble */
 .tooltip-bubble{
@@ -158,17 +180,24 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 .saved-item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px; border-bottom:1px dashed #2f3640}
 .saved-item:last-child{border-bottom:0}
 .path{font-family:"Cascadia Code","Consolas",monospace; color:#a7b3bf; font-size:12px; word-break:break-all}
+
 </style>
 </head>
 <body>
 
+<!-- Global Filters Bar (Top) -->
+<div class="global-filters-bar">
+  <div class="filters-header" id="filtersToggle">
+    <span>📡 <strong>Channel Filters</strong></span>
+    <span class="toggle-icon">▼</span>
+  </div>
+  <div class="filters-content" id="filtersContent">
+    <div id="globalFilterContainer"></div>
+  </div>
+</div>
+
 <div class="container-grid">
   <aside>
-    <div class="card" style="flex-shrink:0;">
-      <h3>Global Filters</h3>
-      <div id="globalFilterContainer" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;"></div>
-    </div>
-
     <div class="card" style="display:flex;flex-direction:column;flex-grow:1;overflow:hidden;">
       <h3>Sensors</h3>
       <div id="sourcesList" style="min-height:120px;"></div>
@@ -215,38 +244,27 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 
 <template id="sourceTileTemplate">
   <div class="source-tile">
-    <div class="row" style="justify-content:space-between;margin-bottom:0;">
-      <input type="text" class="input location-input" placeholder="Label this sensor..." style="font-weight:600;">
-      <div class="tile-actions">
-        <button class="btn btn-save" title="Save this log as a Saved Log">💾 Save</button>
-        <button class="btn btn-relink" title="Relink file if access is lost">🔗 Relink</button>
-        <button class="btn btn-remove" title="Decommission Sensor" aria-label="Decommission Sensor">✖</button>
-      </div>
-    </div>
-    <div class="dropzone" tabindex="0" role="button" aria-label="Attach log file">Drop log file or click to attach</div>
-    <div class="source-file-info"><div class="source-file-name"></div></div>
-    <div class="source-options">
-      <label class="checkbox-row" title="Toggle system chatter for this sensor only">
-        <input type="checkbox" class="show-system-msgs" checked> Show system messages
-      </label>
-    </div>
-    <div class="source-status"><div class="dot"></div><div class="status-text">Awaiting log file...</div></div>
-    <div class="source-footer">
-      <span class="footer-time">Last update: —</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn btn-refresh" title="Reload last lines" aria-label="Reload last lines">⟳</button>
-      </div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <input type="text" class="input location-input" placeholder="Sensor label..." style="flex:1;min-width:100px;font-size:12px;padding:4px 6px;">
+      <div class="dropzone-compact" tabindex="0" role="button" aria-label="Attach log file" style="flex-shrink:0;">📎 Attach</div>
+      <div class="source-file-name" style="flex:1;min-width:80px;font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <label class="checkbox-row" style="font-size:11px;"><input type="checkbox" class="show-system-msgs" checked> Sys</label>
+      <div class="status-text" style="font-size:11px;color:var(--text-muted);min-width:60px;">Awaiting...</div>
+      <button class="btn-icon btn-refresh" title="Reload">⟳</button>
+      <button class="btn-icon btn-save" title="Save">💾</button>
+      <button class="btn-icon btn-relink" title="Relink">🔗</button>
+      <button class="btn-icon btn-remove" title="Remove">✖</button>
     </div>
   </div>
 </template>
 
-<!-- Bottom Drawer Panel -->
-<aside class="bottom-panel" id="bottomPanel" aria-hidden="true">
+<!-- Settings Panel -->
+<aside class="bottom-panel" id="settingsPanel" aria-hidden="true">
   <div class="bottom-panel-header">
-    <h4>Settings • Notifications • Console</h4>
+    <h4>⚙️ Settings & Console</h4>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="btn" id="btnDismissToasts">Dismiss all</button>
-      <button class="btn" id="btnClosePanel">Close</button>
+      <button class="btn" id="btnCloseSettings">Close</button>
     </div>
   </div>
   <div class="bottom-panel-body">
@@ -257,23 +275,19 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
       <span style="opacity:.6">•</span>
       <label class="checkbox-row"><input type="checkbox" id="globalShowCombat"> Show combat messages</label>
       <span style="opacity:.6">•</span>
-      <label class="checkbox-row"><input type="checkbox" id="notifyTeam"> Notify: Team</label>
-      <label class="checkbox-row"><input type="checkbox" id="notifyTell"> Notify: Tell</label>
-      <span style="opacity:.6">•</span>
-      <label class="checkbox-row"><input type="checkbox" id="ruleTowers" checked> Tower Activity</label>
-      <label class="checkbox-row"><input type="checkbox" id="ruleWorldBosses" checked> World Bosses (all)</label>
+      <label class="checkbox-row"><input type="checkbox" id="colorMessagesByChannel"> Color messages by channel</label>
       <div class="spacer"></div>
-      <span style="font-size:11px;color:var(--text-muted)">Applies to Chat & Console views.</span>
-    </div>
-
-    <!-- Buddy list -->
-    <div class="controls-row">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%;">
-        <strong style="font-size:12px;opacity:.85">Buddy list (Tell alerts):</strong>
-        <input id="buddyInput" class="input" placeholder="Type a name and press Add" style="max-width:240px;">
-        <button class="btn" id="buddyAddBtn">Add</button>
-        <div id="buddyChips" class="chips"></div>
-      </div>
+      <label style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+        <span style="font-size:11px;color:var(--text-muted)">Font:</span>
+        <input type="range" id="fontSizeSlider" min="10" max="20" value="14" step="1" style="width:100px;">
+        <span id="fontSizeLabel" style="font-size:11px;color:var(--text-muted);min-width:32px;">14px</span>
+      </label>
+      <span style="opacity:.6">•</span>
+      <label style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+        <span style="font-size:11px;color:var(--text-muted)">Ticker Speed:</span>
+        <input type="range" id="tickerSpeedSlider" min="5" max="100" value="30" step="5" style="width:100px;">
+        <span id="tickerSpeedLabel" style="font-size:11px;color:var(--text-muted);min-width:32px;">30s</span>
+      </label>
     </div>
 
     <div class="console-wrap">
@@ -282,25 +296,88 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   </div>
 </aside>
 
+<!-- Alerts Panel -->
+<aside class="bottom-panel" id="alertsPanel" aria-hidden="true">
+  <div class="bottom-panel-header">
+    <h4>🔔 Buddy List & Alerts</h4>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn" id="btnCloseAlerts">Close</button>
+    </div>
+  </div>
+  <div class="bottom-panel-body" style="overflow-y:auto;padding:12px;">
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <!-- Buddy List -->
+      <div style="border:1px solid var(--border-color);border-radius:8px;padding:14px;background:var(--bg-input);">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">
+          <strong style="color:var(--text-primary);font-size:14px;">Buddy List</strong><br>
+          Get notified when these players send you a Tell message
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <input id="buddyInput" class="input" placeholder="Enter player name" style="flex:1;min-width:200px;max-width:280px;">
+          <button class="btn" id="buddyAddBtn">Add Buddy</button>
+        </div>
+        <div id="buddyChips" class="chips"></div>
+      </div>
+
+      <!-- Channel Notifications -->
+      <div style="border:1px solid var(--border-color);border-radius:8px;padding:14px;background:var(--bg-input);">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">
+          <strong style="color:var(--text-primary);font-size:14px;">Channel Notifications</strong>
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <label class="checkbox-row"><input type="checkbox" id="notifyTeam"> Team chat</label>
+          <label class="checkbox-row"><input type="checkbox" id="notifyTell"> All Tell messages</label>
+        </div>
+      </div>
+
+      <!-- Game Event Alerts -->
+      <div style="border:1px solid var(--border-color);border-radius:8px;padding:14px;background:var(--bg-input);">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">
+          <strong style="color:var(--text-primary);font-size:14px;">Game Event Alerts</strong>
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <label class="checkbox-row"><input type="checkbox" id="ruleTowers" checked> Tower battles</label>
+          <label class="checkbox-row"><input type="checkbox" id="ruleWorldBosses" checked> World boss spawns</label>
+        </div>
+      </div>
+
+      <!-- Custom Text Alerts -->
+      <div style="border:1px solid var(--border-color);border-radius:8px;padding:14px;background:var(--bg-input);">
+        <div style="margin-bottom:10px;font-size:13px;color:var(--text-secondary)">
+          <strong style="color:var(--text-primary);font-size:14px;">Custom Text Alerts</strong><br>
+          Get notified when messages contain specific text
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+          <input id="customAlertInput" class="input" placeholder="Enter text to watch for" style="flex:1;min-width:200px;max-width:280px;">
+          <button class="btn" id="customAlertAddBtn">Add Alert</button>
+        </div>
+        <div id="customAlertChips" class="chips"></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
 <!-- Footer -->
 <div class="statusbar">
   <div class="statusbar-top">
-    <div><strong>Project Oracle</strong> — <span id="modeLabel">SYSTEM IDLE</span></div>
-    <div style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:20px;line-height:1;">🐍</span>
+      <div style="font-size:12px;"><strong>Hydra</strong> · <span id="modeLabel">IDLE</span></div>
       <span class="pill idle" id="parsingIndicator">IDLE</span>
-      <span id="statusMetrics" class="mono"></span>
+      <span id="statusMetrics" class="mono" style="font-size:10px;"></span>
     </div>
-    <div>Last Check: <span id="lastCheckLabel">—</span> • Local: <span id="clockLocal"></span> • UTC: <span id="clockUTC"></span></div>
-  </div>
-
-  <!-- Tools row (always above ticker, right-aligned) -->
-  <div class="statusbar-tools">
-    <button class="tool-btn" id="btnOpenPanel" title="Open settings panel">⚙️ <span>Settings</span></button>
-    <button class="tool-btn" id="btnDismissAllToolbar" title="Dismiss all notifications">✖ <span>Dismiss all</span></button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:10px;color:var(--text-muted);">Last: <span id="lastCheckLabel">—</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="tool-btn compact" id="btnOpenSettings" title="Open settings panel">⚙️</button>
+      <button class="tool-btn compact" id="btnOpenAlerts" title="Open alerts and buddy list">🔔</button>
+      <button class="tool-btn compact" id="btnDismissAllToolbar" title="Dismiss all notifications">✖</button>
+    </div>
   </div>
 
   <div class="statusbar-ticker">
-    <div class="ticker-content" id="tickerContent"><span>⚔️ Monitoring battlefield communications... • ⚔️ Monitoring battlefield communications... • ⚔️ Monitoring battlefield communications...</span></div>
+    <div class="ticker-content scrolling" id="tickerContent">⚔️ Monitoring battlefield communications... • ⚔️ Monitoring battlefield communications...</div>
   </div>
 </div>
 
@@ -323,21 +400,27 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   </div>
 </div>
 
-<!-- Log Finder Modal -->
+<!-- Log Finder Modal (Instructions) -->
 <div class="modal-backdrop" id="finderModal">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <h4>Log Finder</h4>
+      <h4>How to Find Your Anarchy Online Logs</h4>
       <button class="btn" id="finderClose">Close</button>
     </div>
-    <p style="margin:6px 0 10px 0; color:#aab4bf">Pick your Anarchy Online chat log. Try the path below on Windows, or click “Browse…”</p>
-    <div class="row">
-      <div class="path">C:\Users\Administrator\AppData\Local\Funcom\Anarchy Online\9486bac5\Anarchy Online\Prefs\linusdavidson\Char1892400290\Chat\Windows\Window6\Log.txt</div>
-    </div>
-    <div class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <button class="btn" id="finderBrowse">📂 Browse…</button>
-      <input type="file" id="finderFile" style="display:none" />
-      <span style="font-size:12px;color:#8ea0b3">Tip: the active log is usually in the <em>Windows/WindowX</em> subfolder.</span>
+    <div style="margin:12px 0; color:#d0d8e0; line-height:1.7">
+      <p style="margin:6px 0 12px 0"><strong style="color:#00aaff">Windows Path:</strong></p>
+      <div class="path" style="margin-bottom:16px">C:\Users\[YourUsername]\AppData\Local\Funcom\Anarchy Online\[UniqueID]\Anarchy Online\Prefs\[CharacterName]\[CharacterID]\Chat\Windows\Window[X]\Log.txt</div>
+
+      <p style="margin:12px 0 8px 0"><strong style="color:#00aaff">Quick Instructions:</strong></p>
+      <ol style="margin:0 0 12px 20px; padding:0">
+        <li>Press <kbd style="background:#2a2f38;padding:2px 6px;border-radius:4px;border:1px solid #4a505a">Win + R</kbd> to open Run dialog</li>
+        <li>Type: <code style="background:#0e141b;padding:2px 6px;border-radius:4px">%localappdata%\Funcom\Anarchy Online</code></li>
+        <li>Navigate through folders: find your character's Chat folder</li>
+        <li>Look in <strong>Windows\Window[number]</strong> folders for active <strong>Log.txt</strong> files</li>
+        <li>Drag and drop the Log.txt file into a sensor above, or click the dropzone</li>
+      </ol>
+
+      <p style="margin:12px 0 4px 0; font-size:12px; color:#8ea0b3"><strong>💡 Tip:</strong> The active chat log is usually in Window0, Window1, or Window2. Look for the largest or most recently modified Log.txt file.</p>
     </div>
   </div>
 </div>
@@ -422,26 +505,29 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   const chatDisplay=qs('#chatDisplay'), modeLabel=qs('#modeLabel'), statusMetrics=qs('#statusMetrics'), lastCheckLabel=qs('#lastCheckLabel'), parsingIndicator=qs('#parsingIndicator');
   const globalFilterContainer=qs('#globalFilterContainer');
 
-  const bottomPanel=qs('#bottomPanel'), btnOpenPanel=qs('#btnOpenPanel'), btnClosePanel=qs('#btnClosePanel'), btnDismissToasts=qs('#btnDismissToasts');
+  const settingsPanel=qs('#settingsPanel'), btnOpenSettings=qs('#btnOpenSettings'), btnCloseSettings=qs('#btnCloseSettings'), btnDismissToasts=qs('#btnDismissToasts');
+  const alertsPanel=qs('#alertsPanel'), btnOpenAlerts=qs('#btnOpenAlerts'), btnCloseAlerts=qs('#btnCloseAlerts');
   const btnSavedLogs=qs('#btnSavedLogs'), btnFindLogs=qs('#btnFindLogs');
 
   const autoscrollToggle=qs('#toggleAutoscroll'), notifyTeam=qs('#notifyTeam'), notifyTell=qs('#notifyTell'), ruleTowers=qs('#ruleTowers'), ruleWorldBosses=qs('#ruleWorldBosses');
-  const globalShowSystemEl=qs('#globalShowSystem'), globalShowCombatEl=qs('#globalShowCombat');
+  const globalShowSystemEl=qs('#globalShowSystem'), globalShowCombatEl=qs('#globalShowCombat'), colorMessagesByChannelEl=qs('#colorMessagesByChannel');
+  const fontSizeSlider=qs('#fontSizeSlider'), fontSizeLabel=qs('#fontSizeLabel');
+  const tickerSpeedSlider=qs('#tickerSpeedSlider'), tickerSpeedLabel=qs('#tickerSpeedLabel');
 
   const buddyInput=qs('#buddyInput'), buddyAddBtn=qs('#buddyAddBtn'), buddyChips=qs('#buddyChips');
+  const customAlertInput=qs('#customAlertInput'), customAlertAddBtn=qs('#customAlertAddBtn'), customAlertChips=qs('#customAlertChips');
 
   const searchInput=qs('#searchInput'), searchRegex=qs('#searchRegex'), searchCase=qs('#searchCase'), searchOnly=qs('#searchOnly'), searchPrev=qs('#searchPrev'), searchNext=qs('#searchNext'), searchChannel=qs('#searchChannel');
   const searchCountEl=qs('#searchCount'), searchPosEl=qs('#searchPos'), regexHelp=qs('#regexHelp');
 
   const consoleBox=qs('#consoleBox'), consolePre=qs('#consolePre');
-  const clockLocal=qs('#clockLocal'), clockUTC=qs('#clockUTC');
   const tickerEl=qs('#tickerContent');
 
   /* Saved Logs modal */
   const savedModal=qs('#savedModal'), savedClose=qs('#savedClose'), savedList=qs('#savedList'), savedPurge=qs('#savedPurge');
 
   /* Finder modal */
-  const finderModal=qs('#finderModal'), finderClose=qs('#finderClose'), finderBrowse=qs('#finderBrowse'), finderFile=qs('#finderFile');
+  const finderModal=qs('#finderModal'), finderClose=qs('#finderClose');
 
   /* ===== State ===== */
   const sources={}; let linesRead=0, tileCounter=0;
@@ -449,7 +535,7 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   const activeChannels=new Set(), globalFilters={};
   const tickerData={ lastTowerBattle:null, lastLevel220:null, lastAI30:null, lastWorldBoss:null };
   const channelNotify={ 'Team':false, 'Tell Messages':false };
-  let autoScroll=true, globalShowSystem=true, globalShowCombat=false;
+  let autoScroll=true, globalShowSystem=true, globalShowCombat=false, colorMessagesByChannel=false;
 
   // Search state
   const currentSearch={ query:'', regex:false, cs:false, only:false, channel:'', matcher:null };
@@ -469,12 +555,23 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
     });
   }
 
+  // Custom alerts
+  const customAlerts=new Set();
+  function addCustomAlert(text){ const t=(text||'').trim(); if(!t) return; const key=t.toLowerCase(); if(customAlerts.has(key)) return; customAlerts.add(key); renderCustomAlerts(); }
+  function removeCustomAlert(key){ customAlerts.delete(key); renderCustomAlerts(); }
+  function renderCustomAlerts(){
+    customAlertChips.textContent='';
+    customAlerts.forEach(key=>{
+      const chip=document.createElement('span'); chip.className='chip';
+      chip.innerHTML=`<span>${key}</span><button title="Remove">✖</button>`;
+      chip.querySelector('button').addEventListener('click',()=>removeCustomAlert(key));
+      customAlertChips.appendChild(chip);
+    });
+  }
+
   /* ===== Tooltip ===== */
   attachTooltip(regexHelp, "‘Regex’ = advanced pattern matching. Example: ^Tarasque|Dark matches messages starting with ‘Tarasque’ or containing ‘Dark’. Leave it off for normal search.");
 
-  /* ===== Footer clocks ===== */
-  function updateClocks(){ clockLocal.textContent=fmtLocal(); clockUTC.textContent=fmtUTC(); }
-  setInterval(updateClocks, 1000); updateClocks();
 
   /* ===== Ticker ===== */
   let lastTickerStr='';
@@ -501,9 +598,16 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   }
   function setTicker(items){
     const content=(items.length?items:['⚔️ Monitoring battlefield communications...']).join(' • ');
-    const str=`${content} • ${content} • ${content}`;
+    const str=`${content} • ${content}`;
     if(str===lastTickerStr) return;
-    lastTickerStr=str; tickerEl.textContent=''; const span=document.createElement('span'); span.textContent=str; tickerEl.appendChild(span);
+    lastTickerStr=str;
+    // Preserve animation by using opacity transition instead of restarting
+    tickerEl.style.opacity='0';
+    tickerEl.style.transition='opacity 0.3s';
+    setTimeout(()=>{
+      tickerEl.textContent=str;
+      tickerEl.style.opacity='1';
+    }, 300);
   }
   setInterval(()=>setTicker(tickerItems()), 15000); setTicker(tickerItems());
 
@@ -547,15 +651,57 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
     return false;
   }
 
+  /* ===== Player name colors ===== */
+  const playerColorCache = new Map();
+  const playerColors = [
+    '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9',
+    '#a29bfe', '#fd79a8', '#fdcb6e', '#6c5ce7', '#00b894', '#e17055',
+    '#74b9ff', '#81ecec', '#fab1a0', '#ff7675', '#55efc4', '#ffeaa7',
+    '#fd79a8', '#a29bfe', '#74b9ff', '#00b894', '#fdcb6e', '#e17055'
+  ];
+
+  function hashPlayerName(name) {
+    if (!name) return 0;
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = ((hash << 5) - hash) + name.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return Math.abs(hash);
+  }
+
+  function getPlayerColor(playerName) {
+    if (!playerName) return '';
+    if (playerColorCache.has(playerName)) {
+      return playerColorCache.get(playerName);
+    }
+    const hash = hashPlayerName(playerName);
+    const color = playerColors[hash % playerColors.length];
+    playerColorCache.set(playerName, color);
+    return color;
+  }
+
   /* ===== Chat helpers ===== */
   function buildChatMessageEl({time,channel,sender,message,channelColor,isSystemMsg,sourceId}){
     const d=document.createElement('div'); d.className='chat-message channel-'+channel.replace(/[^a-zA-Z0-9]/g,''); d.dataset.channel=channel; d.dataset.isSystemMsg=isSystemMsg?'true':'false'; d.dataset.sourceId=sourceId||'';
     const ts=document.createElement('span'); ts.className='chat-timestamp'; ts.textContent=time;
     const ch=document.createElement('span'); ch.className='chat-channel'; ch.textContent=`[${channel}]`; if(channelColor) ch.style.color=channelColor;
-    const snd=document.createElement('span'); snd.className='chat-sender'; if(sender) snd.textContent=`${sender}:`;
+    const snd=document.createElement('span'); snd.className='chat-sender';
+    if(sender) {
+      snd.textContent=`${sender}:`;
+      snd.style.color = getPlayerColor(sender);
+    }
     const ct=document.createElement('span'); ct.className='chat-content';
     ct.textContent=sanitizeChatMarkup(message);
     ct.dataset.raw = ct.textContent;
+    // Apply channel color to message content if enabled
+    if(colorMessagesByChannel && channelColor) {
+      ct.style.color = channelColor;
+    }
+    // Apply current font size from slider
+    if(fontSizeSlider) {
+      d.style.fontSize = `${fontSizeSlider.value}px`;
+    }
     d.appendChild(ts); d.appendChild(document.createTextNode(' '));
     if(sender){ d.appendChild(ch); d.appendChild(snd); d.appendChild(document.createTextNode(' ')); }
     d.appendChild(ct); return d;
@@ -646,27 +792,29 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
     return lines.filter(Boolean).slice(-maxLines);
   }
 
+  // Sensor colors - different color for each sensor
+  const sensorColors = ['#00c853', '#2aa7ff', '#ff4081', '#ffab00', '#ab47bc', '#00aaff', '#69f0ae'];
+
   function createSourceTile(){
     tileCounter++; const id='sensor-'+tileCounter;
     const tile=sourceTileTemplate.content.cloneNode(true).firstElementChild; tile.dataset.sourceId=id; sourcesList.appendChild(tile);
     sources[id]={id,elem:tile,file:null,fileHandle:null,offset:0,timerId:null,isReading:false,live:false,label:''};
 
-    tile.querySelector('.status-text').textContent='Awaiting log file...'; tile.classList.add('waiting');
-    const dropzone=tile.querySelector('.dropzone'); const fileInput=document.createElement('input'); fileInput.type='file';
+    // Assign unique color to this sensor
+    const colorIndex = (tileCounter - 1) % sensorColors.length;
+    const sensorColor = sensorColors[colorIndex];
+    tile.style.borderLeftColor = sensorColor;
+    sources[id].color = sensorColor;
+
+    tile.querySelector('.status-text').textContent='Awaiting...'; tile.classList.add('waiting');
+    const dropzone=tile.querySelector('.dropzone-compact'); const fileInput=document.createElement('input'); fileInput.type='file';
     const onFileDrop=async(file,handle=null)=>{
       if(sources[id].file) return; await addFileToSource(id,file,handle);
-      dropzone.classList.add('linked'); tile.querySelector('.source-file-info').classList.add('linked');
+      dropzone.classList.add('linked');
     };
     fileInput.onchange=()=>{if(fileInput.files[0]) onFileDrop(fileInput.files[0],null)};
     dropzone.addEventListener('click',()=>fileInput.click());
     dropzone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();}});
-    ['dragover','dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev,async e=>{
-      e.preventDefault(); if(ev==='dragover')dropzone.classList.add('dragover'); else dropzone.classList.remove('dragover');
-      if(ev==='drop'&&e.dataTransfer?.items?.length){let file=null,handle=null;const item=e.dataTransfer.items[0];
-        if('getAsFileSystemHandle' in item){try{const h=await item.getAsFileSystemHandle(); if(h&&h.kind==='file'){handle=h; file=await h.getFile();}}catch{}}
-        if(!file&&e.dataTransfer.files.length) file=e.dataTransfer.files[0]; if(file) onFileDrop(file,handle);
-      }
-    }));
     tile.querySelector('.btn-remove').onclick=()=>removeSource(id);
     tile.querySelector('.btn-refresh').onclick=()=>loadLastLines(id,{forceScroll:true,updateTickerNow:true});
     tile.querySelector('.btn-relink').onclick=async()=>{ const handle = await pickFileHandle(); if(handle){ const f=await handle.getFile(); await addFileToSource(id,f,handle); } };
@@ -692,9 +840,8 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   async function addFileToSource(id,file,handle=null){
     const s=sources[id]; s.file=file; s.fileHandle=handle; s.live=!!handle; s.offset=file.size;
     const el=s.elem; el.classList.remove('waiting'); el.classList.add('active');
-    el.querySelector('.source-file-name').textContent=`Linked: ${file.name}`;
-    el.querySelector('.status-text').textContent=s.live?'Tailing (Live)':'Static file (use Refresh)';
-    el.querySelector('.footer-time').textContent='Last update: '+fmtLocal();
+    el.querySelector('.source-file-name').textContent=file.name;
+    el.querySelector('.status-text').textContent=s.live?'Live':'Static';
 
     await loadLastLines(id,{forceScroll:true,updateTickerNow:true});
     if(s.live) startTailingForSource(id);
@@ -718,13 +865,12 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 
   function startTailingForSource(id){
     const s=sources[id]; if(s.timerId) clearInterval(s.timerId);
-    if(!s.live){s.elem.querySelector('.status-text').textContent='Static file (use Refresh)';return;}
+    if(!s.live){s.elem.querySelector('.status-text').textContent='Static';return;}
     const poll=1200; s.timerId=setInterval(async()=>{
       if(!s.fileHandle) return; lastCheckLabel.textContent=fmtLocal();
       const delta=await readDelta(s,kb(256)); if(!delta||!delta.text) return;
       parsingIndicator.className='pill parsing'; parsingIndicator.textContent='PARSING';
       setTimeout(()=>{parsingIndicator.className='pill active'; parsingIndicator.textContent='ACTIVE'},200);
-      s.elem.querySelector('.footer-time').textContent='Last update: '+fmtLocal();
 
       const lines=delta.text.split(/\r?\n/).filter(Boolean);
       let i=0; const CHUNK=50;
@@ -762,7 +908,6 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
       })();
 
       s.offset = f.size;
-      s.elem.querySelector('.footer-time').textContent='Last update: '+fmtLocal();
       if(forceScroll){ consoleBox.scrollTop=consoleBox.scrollHeight; chatDisplay.scrollTop=chatDisplay.scrollHeight; }
     }catch(e){ toastErr(e); }
   }
@@ -783,8 +928,27 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
       if(who && who.toLowerCase() !== 'has'){ tickerData.lastLevel220 = `${who} hit Level 220!`; }
     }
 
-    // Towers
-    if(/tower (battle|attack)/i.test(message)){ tickerData.lastTowerBattle = message.substring(0,100); }
+    // Towers - improved formatting
+    const towerMatch = message.match(/tower\s+(battle|attack)/i);
+    if(towerMatch){
+      // Extract key info: org names, site location
+      const notumMatch = message.match(/Notum Wars:\s*(.+?)(?:\.|$)/i);
+      const victorMatch = message.match(/The\s+(.+?)\s+(?:attacker|attacked|won|victorious|defended)/i);
+      const siteMatch = message.match(/(?:site|field)\s+(\d+[A-Z]?)/i);
+
+      let formatted = '';
+      if(notumMatch){
+        // Clean up the Notum Wars message
+        formatted = notumMatch[1].trim();
+      } else if(victorMatch || siteMatch){
+        formatted = `Tower: ${victorMatch?.[1] || 'Unknown'}`;
+        if(siteMatch) formatted += ` (Site ${siteMatch[1]})`;
+      } else {
+        // Fallback: clean and truncate
+        formatted = message.replace(/^[^:]*:\s*/,'').substring(0,80);
+      }
+      tickerData.lastTowerBattle = formatted;
+    }
 
     // World boss spawn (variable location)
     const darkBoss = message.match(/A dark creature rises from its slumber in (.+?)\. It will be immortal for (\d+|\w+)\s+minutes\./i);
@@ -803,6 +967,15 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
     if(isCombatMessage(channel, message)) return; // no spam toasts
 
     const body = sanitizeChatMarkup(message).slice(0,160);
+    const msgLower = body.toLowerCase();
+
+    // Custom alerts
+    customAlerts.forEach(alertText=>{
+      if(msgLower.includes(alertText)){
+        Toasts.push({title:`🔍 Custom Alert: "${alertText}"`,body,variant:'info'});
+      }
+    });
+
     if((channel==='Team' && channelNotify['Team']) || (channel==='Tell Messages' && channelNotify['Tell Messages'])){
       Toasts.push({title:`🔔 ${channel}`,body});
     }
@@ -1014,8 +1187,26 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   }
 
   /* ===== Footer tools wiring ===== */
-  btnOpenPanel.addEventListener('click',()=>{bottomPanel.classList.add('open'); bottomPanel.setAttribute('aria-hidden','false')});
-  btnClosePanel.addEventListener('click',()=>{bottomPanel.classList.remove('open'); bottomPanel.setAttribute('aria-hidden','true')});
+  btnOpenSettings.addEventListener('click',()=>{
+    settingsPanel.classList.add('open');
+    settingsPanel.setAttribute('aria-hidden','false');
+    alertsPanel.classList.remove('open');
+    alertsPanel.setAttribute('aria-hidden','true');
+  });
+  btnCloseSettings.addEventListener('click',()=>{
+    settingsPanel.classList.remove('open');
+    settingsPanel.setAttribute('aria-hidden','true');
+  });
+  btnOpenAlerts.addEventListener('click',()=>{
+    alertsPanel.classList.add('open');
+    alertsPanel.setAttribute('aria-hidden','false');
+    settingsPanel.classList.remove('open');
+    settingsPanel.setAttribute('aria-hidden','true');
+  });
+  btnCloseAlerts.addEventListener('click',()=>{
+    alertsPanel.classList.remove('open');
+    alertsPanel.setAttribute('aria-hidden','true');
+  });
   btnDismissAllToolbar.addEventListener('click',()=>Toasts.dismissAll());
   btnDismissToasts.addEventListener('click',()=>Toasts.dismissAll());
 
@@ -1031,21 +1222,55 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 
   globalShowSystemEl.addEventListener('change',()=>{globalShowSystem=globalShowSystemEl.checked; applyGlobalFilters(); if(currentSearch.query) applySearch(true);});
   globalShowCombatEl.addEventListener('change',()=>{globalShowCombat=globalShowCombatEl.checked; applyGlobalFilters(); if(currentSearch.query) applySearch(true);});
+  colorMessagesByChannelEl.addEventListener('change',()=>{
+    colorMessagesByChannel=colorMessagesByChannelEl.checked;
+    // Rebuild all messages to apply/remove channel colors
+    document.querySelectorAll('.chat-content').forEach(ct=>{
+      const msg = ct.closest('.chat-message');
+      const channel = msg?.dataset.channel;
+      if(colorMessagesByChannel && channel){
+        const channelEl = msg.querySelector('.chat-channel');
+        const color = channelEl?.style.color;
+        if(color) ct.style.color = color;
+      } else {
+        ct.style.color = '';
+      }
+    });
+  });
+
+  // Font size slider
+  fontSizeSlider.addEventListener('input',()=>{
+    const size = fontSizeSlider.value;
+    fontSizeLabel.textContent = `${size}px`;
+    // Set font size on chat display and all chat messages
+    chatDisplay.style.setProperty('font-size', `${size}px`, 'important');
+    const chatPane = qs('#chatPane');
+    if(chatPane) chatPane.style.setProperty('font-size', `${size}px`, 'important');
+    // Apply to all chat messages
+    document.querySelectorAll('.chat-message').forEach(msg => {
+      msg.style.fontSize = `${size}px`;
+    });
+  });
+
+  // Ticker speed slider
+  tickerSpeedSlider.addEventListener('input',()=>{
+    const speed = tickerSpeedSlider.value;
+    tickerSpeedLabel.textContent = `${speed}s`;
+    const tickerContent = qs('.ticker-content');
+    if(tickerContent){
+      tickerContent.style.animationDuration = `${speed}s`;
+    }
+  });
 
   buddyAddBtn.addEventListener('click',()=>{addBuddy(buddyInput.value); buddyInput.value=''; buddyInput.focus();});
   buddyInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'){addBuddy(buddyInput.value); buddyInput.value='';}});
 
+  customAlertAddBtn.addEventListener('click',()=>{addCustomAlert(customAlertInput.value); customAlertInput.value=''; customAlertInput.focus();});
+  customAlertInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'){addCustomAlert(customAlertInput.value); customAlertInput.value='';}});
+
   /* ===== Finder modal ===== */
   function openFinderModal(){ finderModal.style.display='flex'; }
   finderClose.addEventListener('click',()=>{ finderModal.style.display='none'; });
-  finderBrowse.addEventListener('click',()=> finderFile.click());
-  finderFile.addEventListener('change', async ()=>{
-    const f = finderFile.files[0]; if(!f) return;
-    const id = createSourceTileReturnId();
-    await addFileToSource(id, f, null);
-    finderModal.style.display='none';
-  });
-  function createSourceTileReturnId(){ createSourceTile(); return 'sensor-'+tileCounter; }
 
   /* ===== Saved Logs (IndexedDB of file handles) ===== */
   const DB_NAME='oracleFS', DB_VER=1, STORE='files';
@@ -1165,6 +1390,13 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
     btn.addEventListener('click',()=>{
       document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
       document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active')); document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Collapsible sections
+  document.querySelectorAll('.collapsible-header').forEach(header=>{
+    header.addEventListener('click',()=>{
+      header.parentElement.classList.toggle('collapsed');
     });
   });
 
