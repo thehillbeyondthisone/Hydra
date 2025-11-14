@@ -47,18 +47,22 @@ main{overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 
 .input{background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-color);padding:6px 8px;border-radius:6px;width:100%}
 .checkbox-row{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 #sourcesList{flex-grow:1;overflow-y:auto;padding:8px;padding-bottom:12px;}
-.source-tile{background:var(--bg-input);padding:8px;border-radius:6px;margin-bottom:8px;border-left:3px solid var(--text-muted);transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.source-tile{background:var(--bg-input);padding:6px;border-radius:6px;margin-bottom:6px;border-left:3px solid var(--text-muted);transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .source-tile.waiting{border-left-color:var(--color-warn)}
 .source-tile.active{border-left-color:var(--color-ok)}
-.dropzone-compact{padding:4px 8px;background:var(--bg-main);border:1px solid var(--border-color);border-radius:4px;font-size:11px;cursor:pointer;transition:.2s;color:var(--text-secondary)}
-.dropzone-compact:hover{border-color:var(--accent-primary);background:#2c2c36;color:var(--accent-primary)}
-.dropzone-compact.linked{display:none}
-.btn-icon{background:transparent;border:1px solid var(--border-color);padding:3px 6px;border-radius:4px;font-size:12px;cursor:pointer;transition:.2s;color:var(--text-secondary)}
-.btn-icon:hover{background:var(--bg-main);border-color:var(--accent-primary);color:var(--text-primary)}
+.dropzone{height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(0,0,0,.3);border:1px dashed var(--border-color);border-radius:4px;padding:4px;transition:.2s;cursor:pointer;margin-top:4px;font-size:11px;color:var(--text-secondary)}
+.dropzone.linked{display:none}
+.dropzone.dragover,.dropzone:hover{border-color:var(--accent-primary);background:#2c2c36}
+.source-file-info{display:none}
+.source-file-info.linked{display:block;background:rgba(0,0,0,.2);border:1px solid var(--border-color);border-radius:4px;padding:3px 6px;margin-top:3px;font-size:11px}
+.source-file-name{font-weight:500;font-size:11px;color:var(--text-secondary);word-break:break-all}
+.source-options{font-size:11px;margin-top:3px}
+.source-status{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-secondary);margin-top:3px}
+.source-footer{font-size:10px;color:var(--text-muted);margin-top:3px;display:flex;justify-content:space-between;align-items:center;gap:6px}
 
 /* Small tile actions */
-.tile-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.tile-actions .btn{padding:4px 8px;font-size:12px}
+.tile-actions{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.tile-actions .btn{padding:3px 6px;font-size:11px;height:24px}
 
 /* Tabs */
 .tab-nav{display:flex;gap:4px;margin-bottom:8px;border-bottom:1px solid var(--border-color);align-items:center}
@@ -244,16 +248,22 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 
 <template id="sourceTileTemplate">
   <div class="source-tile">
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <input type="text" class="input location-input" placeholder="Sensor label..." style="flex:1;min-width:100px;font-size:12px;padding:4px 6px;">
-      <div class="dropzone-compact" tabindex="0" role="button" aria-label="Attach log file" style="flex-shrink:0;">📎 Attach</div>
-      <div class="source-file-name" style="flex:1;min-width:80px;font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-      <label class="checkbox-row" style="font-size:11px;"><input type="checkbox" class="show-system-msgs" checked> Sys</label>
-      <div class="status-text" style="font-size:11px;color:var(--text-muted);min-width:60px;">Awaiting...</div>
-      <button class="btn-icon btn-refresh" title="Reload">⟳</button>
-      <button class="btn-icon btn-save" title="Save">💾</button>
-      <button class="btn-icon btn-relink" title="Relink">🔗</button>
-      <button class="btn-icon btn-remove" title="Remove">✖</button>
+    <div class="row" style="justify-content:space-between;margin-bottom:0;gap:4px;">
+      <input type="text" class="input location-input" placeholder="Label" style="font-weight:600;flex:1;min-width:80px;font-size:11px;padding:3px 4px;height:24px;">
+      <div class="tile-actions">
+        <button class="btn btn-save" title="Save">💾</button>
+        <button class="btn btn-relink" title="Relink">🔗</button>
+        <button class="btn btn-refresh" title="Reload">⟳</button>
+        <button class="btn btn-remove" title="Remove">✖</button>
+      </div>
+    </div>
+    <div class="dropzone" tabindex="0" role="button" aria-label="Attach log file">📂 Drop file</div>
+    <div class="source-file-info"><div class="source-file-name"></div></div>
+    <div class="source-options" style="display:flex;align-items:center;gap:6px;">
+      <label class="checkbox-row" style="margin:0;">
+        <input type="checkbox" class="show-system-msgs" checked> Sys
+      </label>
+      <div class="status-text" style="flex:1;text-align:right;">Awaiting...</div>
     </div>
   </div>
 </template>
@@ -400,30 +410,7 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   </div>
 </div>
 
-<!-- Log Finder Modal (Instructions) -->
-<div class="modal-backdrop" id="finderModal">
-  <div class="modal">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h4>How to Find Your Anarchy Online Logs</h4>
-      <button class="btn" id="finderClose">Close</button>
-    </div>
-    <div style="margin:12px 0; color:#d0d8e0; line-height:1.7">
-      <p style="margin:6px 0 12px 0"><strong style="color:#00aaff">Windows Path:</strong></p>
-      <div class="path" style="margin-bottom:16px">C:\Users\[YourUsername]\AppData\Local\Funcom\Anarchy Online\[UniqueID]\Anarchy Online\Prefs\[CharacterName]\[CharacterID]\Chat\Windows\Window[X]\Log.txt</div>
 
-      <p style="margin:12px 0 8px 0"><strong style="color:#00aaff">Quick Instructions:</strong></p>
-      <ol style="margin:0 0 12px 20px; padding:0">
-        <li>Press <kbd style="background:#2a2f38;padding:2px 6px;border-radius:4px;border:1px solid #4a505a">Win + R</kbd> to open Run dialog</li>
-        <li>Type: <code style="background:#0e141b;padding:2px 6px;border-radius:4px">%localappdata%\Funcom\Anarchy Online</code></li>
-        <li>Navigate through folders: find your character's Chat folder</li>
-        <li>Look in <strong>Windows\Window[number]</strong> folders for active <strong>Log.txt</strong> files</li>
-        <li>Drag and drop the Log.txt file into a sensor above, or click the dropzone</li>
-      </ol>
-
-      <p style="margin:12px 0 4px 0; font-size:12px; color:#8ea0b3"><strong>💡 Tip:</strong> The active chat log is usually in Window0, Window1, or Window2. Look for the largest or most recently modified Log.txt file.</p>
-    </div>
-  </div>
-</div>
 
 <script>
 (function(){
@@ -525,9 +512,6 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
 
   /* Saved Logs modal */
   const savedModal=qs('#savedModal'), savedClose=qs('#savedClose'), savedList=qs('#savedList'), savedPurge=qs('#savedPurge');
-
-  /* Finder modal */
-  const finderModal=qs('#finderModal'), finderClose=qs('#finderClose');
 
   /* ===== State ===== */
   const sources={}; let linesRead=0, tileCounter=0;
@@ -807,14 +791,21 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
     sources[id].color = sensorColor;
 
     tile.querySelector('.status-text').textContent='Awaiting...'; tile.classList.add('waiting');
-    const dropzone=tile.querySelector('.dropzone-compact'); const fileInput=document.createElement('input'); fileInput.type='file';
+    const dropzone=tile.querySelector('.dropzone'); const fileInput=document.createElement('input'); fileInput.type='file';
     const onFileDrop=async(file,handle=null)=>{
       if(sources[id].file) return; await addFileToSource(id,file,handle);
-      dropzone.classList.add('linked');
+      dropzone.classList.add('linked'); tile.querySelector('.source-file-info').classList.add('linked');
     };
     fileInput.onchange=()=>{if(fileInput.files[0]) onFileDrop(fileInput.files[0],null)};
     dropzone.addEventListener('click',()=>fileInput.click());
     dropzone.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileInput.click();}});
+    ['dragover','dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev,async e=>{
+      e.preventDefault(); if(ev==='dragover')dropzone.classList.add('dragover'); else dropzone.classList.remove('dragover');
+      if(ev==='drop'&&e.dataTransfer?.items?.length){let file=null,handle=null;const item=e.dataTransfer.items[0];
+        if('getAsFileSystemHandle' in item){try{const h=await item.getAsFileSystemHandle(); if(h&&h.kind==='file'){handle=h; file=await h.getFile();}}catch{}}
+        if(!file&&e.dataTransfer.files.length) file=e.dataTransfer.files[0]; if(file) onFileDrop(file,handle);
+      }
+    }));
     tile.querySelector('.btn-remove').onclick=()=>removeSource(id);
     tile.querySelector('.btn-refresh').onclick=()=>loadLastLines(id,{forceScroll:true,updateTickerNow:true});
     tile.querySelector('.btn-relink').onclick=async()=>{ const handle = await pickFileHandle(); if(handle){ const f=await handle.getFile(); await addFileToSource(id,f,handle); } };
@@ -840,8 +831,8 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   async function addFileToSource(id,file,handle=null){
     const s=sources[id]; s.file=file; s.fileHandle=handle; s.live=!!handle; s.offset=file.size;
     const el=s.elem; el.classList.remove('waiting'); el.classList.add('active');
-    el.querySelector('.source-file-name').textContent=file.name;
-    el.querySelector('.status-text').textContent=s.live?'Live':'Static';
+    el.querySelector('.source-file-name').textContent=`Linked: ${file.name}`;
+    el.querySelector('.status-text').textContent=s.live?'Tailing (Live)':'Static file (use Refresh)';
 
     await loadLastLines(id,{forceScroll:true,updateTickerNow:true});
     if(s.live) startTailingForSource(id);
@@ -1214,7 +1205,6 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   if (btnAddSource) btnAddSource.addEventListener('click', (e) => { e.preventDefault(); createSourceTile(); });
   btnReset.addEventListener('click',()=>{if(confirm('Reset all sensors and logs?')) resetAll();});
   btnSavedLogs.addEventListener('click',()=>{ openSavedModal(); });
-  btnFindLogs.addEventListener('click',()=>{ openFinderModal(); });
 
   autoscrollToggle.addEventListener('change',()=>{autoScroll=autoscrollToggle.checked});
   notifyTeam.addEventListener('change',()=>channelNotify['Team']=notifyTeam.checked);
@@ -1268,9 +1258,7 @@ mark.search-hit{background:#f9d36c;color:#111;padding:0 2px;border-radius:2px}
   customAlertAddBtn.addEventListener('click',()=>{addCustomAlert(customAlertInput.value); customAlertInput.value=''; customAlertInput.focus();});
   customAlertInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'){addCustomAlert(customAlertInput.value); customAlertInput.value='';}});
 
-  /* ===== Finder modal ===== */
-  function openFinderModal(){ finderModal.style.display='flex'; }
-  finderClose.addEventListener('click',()=>{ finderModal.style.display='none'; });
+  /* ===== Finder modal removed - use dropzone instead ===== */
 
   /* ===== Saved Logs (IndexedDB of file handles) ===== */
   const DB_NAME='oracleFS', DB_VER=1, STORE='files';
