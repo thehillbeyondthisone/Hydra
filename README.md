@@ -26,6 +26,12 @@ Each sensor watches, reports, and reacts — combining their input into a single
 
 ## 🚀 Quick Setup
 
+⚙️ **Add Buddy Alerts**
+   - In game, open the chat panel and create a new window.
+   - Name it Hydra and enable logging.
+   - Open the folder containing the log on your local computer.
+   - Subscribe to chat channels. (Enabling all chat channels is recommended, as you can filter the feed in Hydra itself)
+
 🖥️ **Open Hydra**  
    Launch `Hydra.html` in a Chromium-based browser.  
    _(Chrome/Edge recommended — Firefox lacks persistent handle support.)_
